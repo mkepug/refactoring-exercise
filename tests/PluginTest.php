@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Plugin;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,8 +15,22 @@ use PHPUnit\Framework\TestCase;
  */
 class PluginTest extends TestCase
 {
-    public function test()
+    /**
+     * @var Plugin
+     */
+    protected $plugin;
+    
+    public function setUp()
     {
-        $this->assertTrue(true);
+        $this->plugin = new Plugin();
+    }
+
+    public function testOnContentPrepare_osapply_NoChange()
+    {
+        $context = $params = null;
+        $article = (object) ['text' => 'content here with no replacements', 'title' => 'the title'];
+        
+        $this->plugin->onContentPrepare($context, $article, $params);
+        $this->assertSame('content here with no replacements', $article->text);
     }
 }

@@ -12,6 +12,25 @@ namespace App;
  */
 class Plugin
 {
+    /**
+     * Returns the incoming get request plus a key to indicate it was a response from a parameter 
+     * 
+     * @var mixed anonymous class that provides a response to the 'get' request that we're missing in this example
+     */
+    protected $params;
+
+    /**
+     * Plugin constructor.
+     */
+    public function __construct()
+    {
+        $this->params = new class {
+            public function get($incoming) {
+                return $incoming . '__PARAM';
+            }
+        };
+    }
+    
     public function onContentPrepare($context, &$article, &$params, $page = 0) {
         if ($this->_shouldNotTry($context, $article)){ return; }
         $article->text = str_replace('{osapply}', $this->_oldButtonText($article->title), $article->text);
@@ -19,7 +38,8 @@ class Plugin
     }
 
     private function _oldButtonText($title) {
-        $oldTitle = $this->_formatOldTitle($title); $baseText = $this->params->get('osapply');
+        $oldTitle = $this->_formatOldTitle($title); 
+        $baseText = $this->params->get('osapply');
         return str_replace('{title}', $oldTitle, $baseText);
     }
 
