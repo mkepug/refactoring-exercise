@@ -13,6 +13,14 @@ namespace App;
 class Plugin
 {
     /**
+     * The replacement placeholders and what version of title filtering they use
+     */
+    const PLACEHOLDER_TITLE_FILTER_VERSION = [
+        'osapply' => 1,
+        'pkapply' => 2
+    ];
+    
+    /**
      * @var ParamsContract
      */
     protected $params;
@@ -25,34 +33,75 @@ class Plugin
     {
         $this->params = $params;
     }
-    
-    public function onContentPrepare($context, &$article, &$params, $page = 0) {
-        if ($this->_shouldNotTry($context, $article)){ return; }
-        $article->text = str_replace('{osapply}', $this->_oldButtonText($article->title), $article->text);
-        $article->text = str_replace('{pkapply}', $this->_newButtonText($article->title), $article->text);
+
+    /**
+     * Handler for content prepare:
+     * 
+     * - replaces {osapply} and {pkapply} template items
+     * 
+     * @param $context mixed passed to should not try only
+     * @param $article mixed an object that contains values that are filtered
+     * @param $params mixed ignored
+     * @param int $page ignored
+     */
+    public function onContentPrepare($context, $article, &$params, $page = 0) {
+        if (!$this->shouldNotTry($context, $article)) {
+            foreach (array_keys(static::PLACEHOLDER_TITLE_FILTER_VERSION) as $placeholder) {
+                $this->replacePlaceholder($placeholder, $article);
+            }
+        }
     }
 
-    private function _oldButtonText($title) {
-        $oldTitle = $this->_formatOldTitle($title); 
-        $baseText = $this->params->get('osapply');
-        return str_replace('{title}', $oldTitle, $baseText);
+    /**
+     * Takes a placeholder and an article, and replaces it using the proper strategy for filtering
+     * 
+     * @param $placeholder
+     * @param $article
+     */
+    protected function replacePlaceholder($placeholder, $article)
+    {
+        $filterFunction = sprintf('version%sFilter', static::PLACEHOLDER_TITLE_FILTER_VERSION[$placeholder]);
+        
+        $filteredTitle = $this->$filterFunction($article->title);
+        
+        $replacementText = str_replace('{title}', $filteredTitle, $this->params->get($placeholder));
+        
+        $article->text = str_replace('{' . $placeholder . '}', $replacementText, $article->text);
     }
 
-    private function _formatOldTitle($title) {
-        return preg_replace("/\s+/", "_", $title);
+    /**
+     * "old" filtering version
+     * 
+     * @param string $incoming
+     * @return mixed
+     */
+    protected function version1Filter(string $incoming)
+    {
+        return preg_replace('/\s+/', '_', $incoming);
     }
 
-    private function _newButtonText($title) {
-        $newTitle = $this->_formatNewTitle($title);
-        $baseText = $this->params->get('pkapply');
-        return str_replace('{title}', $newTitle, $baseText);
+    /**
+     * "new" filtering version
+     * 
+     * @param string $incoming
+     * @return string
+     */
+    protected function version2Filter(string $incoming)
+    {
+        return base64_encode($incoming);
     }
 
-    private function _formatNewTitle($title) {
-        return base64_encode($title);
-    }
-    
-    private function _shouldNotTry($context, $article) {
+    /**
+     * Whether we should try this or not
+     * 
+     * - this is a stub
+     * 
+     * @param $context
+     * @param $article
+     * @return bool
+     */
+    protected function shouldNotTry($context, $article)
+    {
         return false;
     }
 }
