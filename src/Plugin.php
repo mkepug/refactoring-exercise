@@ -60,11 +60,13 @@ class Plugin
      */
     protected function replacePlaceholder($placeholder, $article)
     {
-        $filterFunction = sprintf('version%sFilter', static::PLACEHOLDER_TITLE_FILTER_VERSION[$placeholder]);
+        $titleFilterFunction = sprintf('version%dFilter', static::PLACEHOLDER_TITLE_FILTER_VERSION[$placeholder]);
         
-        $filteredTitle = $this->$filterFunction($article->title);
-        
-        $replacementText = str_replace('{title}', $filteredTitle, $this->params->get($placeholder));
+        $replacementText = str_replace(
+            '{title}', 
+            $this->$titleFilterFunction($article->title), 
+            $this->params->get($placeholder)
+        );
         
         $article->text = str_replace('{' . $placeholder . '}', $replacementText, $article->text);
     }
