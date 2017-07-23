@@ -13,22 +13,17 @@ namespace App;
 class Plugin
 {
     /**
-     * Returns the incoming get request plus a key to indicate it was a response from a parameter 
-     * 
-     * @var mixed anonymous class that provides a response to the 'get' request that we're missing in this example
+     * @var ParamsContract
      */
     protected $params;
 
     /**
      * Plugin constructor.
+     * @param $params
      */
-    public function __construct()
+    public function __construct(ParamsContract $params)
     {
-        $this->params = new class {
-            public function get($incoming) {
-                return $incoming . '__PARAM';
-            }
-        };
+        $this->params = $params;
     }
     
     public function onContentPrepare($context, &$article, &$params, $page = 0) {
